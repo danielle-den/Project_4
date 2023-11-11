@@ -1,54 +1,51 @@
 #include <fstream>
-#include <map>
 #include <iostream>
 #include <list>
-#include <pthread.h>
-#include <istream>
+#include <unordered_map>
+#include <string>
 
 using namespace std;
 
 // Creates the encoded and mapping structures
-void setup(fstream &file, map<string, int>& mapping, list<string> &data, list<int> &encoded_data){
-  string read;
-  int en = 1;
+void setup(fstream &file, unordered_map<string, int>& wordToIDMap, list<string> &wordList, list<int> &encodedData) {
+    string word;
+    int id = 1;
 
-  while(file >> read){
-    if(mapping.find(read) == mapping.end()){    // Check to see if we have already read this word
-      mapping[read] = 0;
+    while (file >> word) {
+        if (wordToIDMap.find(word) == wordToIDMap.end()) {
+            wordToIDMap[word] = id;
+            id++;
+        }
+        wordList.push_back(word);
+    }
+    file.close();
+
+    // Display the word-to-ID mapping
+    for (const auto &pair : wordToIDMap) {
+        cout << pair.first << " " << pair.second << endl;
     }
 
-    data.push_back(read);
-  }
-  file.close();
-  // Get the mapping and store it in the library
-  for(auto i = mapping.begin(); i != mapping.end(); i++, en++){
-    i->second+= en;
-    cout << i->first << " " << i->second << endl;
-  }
-
-  // Set the encoded_data properly
-  for(auto i = data.begin(); i != data.end(); i++){
-    encoded_data.push_back(mapping[*i]);
-  }
+    // Set the encodedData properly
+    for (const string &word : wordList) {
+        encodedData.push_back(wordToIDMap[word]);
+    }
 }
 
-
-int main(){
-    string file_name, read;
-    map<string, int> mapping;
-    list<string> data;
-    list<int> encoded_data;
+int main() {
+    string file_name;
+    unordered_map<string, int> wordToIDMap;
+    list<string> wordList;
+    list<int> encodedData;
 
     cout << "file name: ";
     cin >> file_name;
 
     fstream file(file_name);
-    if(file.good()) {
-        cout << "file is good" << endl;
-        setup(file, mapping, data, encoded_data);
+    if (file.good()) {
+        setup(file, wordToIDMap, wordList, encodedData);
+    } else {
+        cout << "Unable to open file. Exiting program." << endl;
     }
-    else cout << "Unable to open file. Exiting program." << endl;
-
 
     return 0;
 }
