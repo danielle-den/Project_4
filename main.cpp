@@ -16,7 +16,7 @@ void encode(map<string, int>& mapping, int en, int end){
   for(auto i = mapping.begin(); count < int(mapping.size()); i++, count++){
     if(count < end and count >= en){         // For each thread, only operate on the section of data dedicated for you
       i->second += ++en;
-      // cout << i->first << " " << i->second << endl;
+      cout << i->first << " " << i->second << endl;
     }
   }
 
@@ -25,7 +25,7 @@ void encode(map<string, int>& mapping, int en, int end){
 
 
 void vanilla(fstream &file, list<string> &data){
-  string value;
+  string value, read;
 
   while(file >> read) data.push_back(read);             // Store column data
 
@@ -42,23 +42,30 @@ void vanilla(fstream &file, list<string> &data){
 // Creates the encoded and mapping structures
 void setup(fstream &file, map<string, int>& mapping, list<string> &data, list<int> &encoded_data){
   string read;
-  vector<thread> threads;
-  int en = 0; int num_threads = 2;
+  list<thread> threads;
+  int numThreads = 2;
+
+  cout << "Enter the number of threads to use for encoding: ";
+  cin >> numThreads;
 
   while(file >> read){
-    if(mapping.find(read) == mapping.end()){    // Add unique words from column
-      mapping[read] = 0;
-    }
+    // Add the data without duplicates
+    if(mapping.find(read) == mapping.end()) mapping[read] = 0;
 
     data.push_back(read);
   }
-  cout << "here" << endl;
   file.close();
 
-  threads.push_back(thread(encode, ref(mapping), en, int(mapping.size()/2)));                       // First thread goes from beginning to middle
-  threads.push_back(thread(encode, ref(mapping), mapping.size()/2, int(mapping.size())));          // Second thread goes from middle to end
-  threads[0].join(); threads[1].join();
+  int chunkSize = int(mapping.size()) / numThreads;
+  for(int i = 0; i < numThreads; i++) {
+    int start = i * chunkSize;
+    int end = (i == numThreads - 1) ? int(mapping.size()) : (i + 1) * chunkSize;
+    threads.push_back(thread(encode, ref(mapping), start, end));
+  }
 
+  for(auto i = threads.begin(); i != threads.end(); i++){
+    i->join();
+  }
 
   // Set the encoded_data properly
   for(auto i = data.begin(); i != data.end(); i++){
@@ -81,7 +88,7 @@ int main(){
       cin >> file_name;
 
       if(file_name == "y") setup(file, mapping, data, encoded_data);
-      else vanilla();
+      else vanilla(file, data);
     }
     else cout << "Unable to open file. Exiting program." << endl;
 
