@@ -19,19 +19,46 @@ void print(vector<int> &vec){
 }
 
 // Regular encoding without integer compression
-void encode(map<string, int>& mapping, int en, int end, vector<int> &encoded_data){
-  // Get the mapping and store it in the library
-  int count = 0;
-  for(auto i = mapping.begin(); count < int(mapping.size()); i++, count++){
-    if(count < end and count >= en){         // For each thread, only operate on the section of data dedicated for you
-      for(int j = 0; j < int(encoded_data.size()); j++){              // Update the codes
-        if(encoded_data[j] == i->second) encoded_data[j] = en+1;
-      }
-      i->second += ++en;
-    }
-  }
+//Query
+/*
+ *  type => Decides if this is a prefix scan or a single item scan. Can assume value of 1 or 0
+ *
+/*/
+void Query(int type, string prefix,map<string, int>& mapping, vector<int> &Vals, map<int,vector<int>> &OrderData){
+  map<string, int>::iterator itr_mapping;
+  vector<int> lookupVals;
+  Vals.clear();
 
-  return;
+//Process data if valid request
+  if(type == 1 || type == 0){
+    if(type == 1){
+      //get the value associated with the input word
+      itr_mapping = mapping.find(prefix);
+      if(itr_mapping != mapping.end()){
+        lookupVals.push_back(mapping[prefix]);
+      }
+
+    }else if (type == 0){
+      //based on given prefix find indexes of entries that have that prefix
+      for(itr_mapping = mapping.begin(); itr_mapping != mapping.end(); itr_mapping++){
+        if((*itr_mapping).first.find(prefix) == 0){
+          lookupVals.push_back((*itr_mapping).second);
+        }
+      }
+    }
+
+    // Find the indicies for all of the requests that were made
+    for(int i = 0; i < int(lookupVals.size()); i++){
+      for(int j = 0; j < int(OrderData[lookupVals[i]].size()); j++){
+
+        Vals.push_back(OrderData[lookupVals[i]][j]);
+      }
+    }
+
+
+  }else{
+    cerr << "ERR 401: Bad Data passed to Querey function \"type\" argument"<<endl;
+  }
 }
 
 // Baseline
@@ -156,7 +183,7 @@ void setup(fstream &file, map<string, int>& mapping, vector<int> &encoded_data){
     i->join();
   }
   auto time_end = std::chrono::high_resolution_clock::now();
-  auto duration = chrono::duration_cast<chrono::seconds>(time_start - time_end);
+  auto duration = (time_end - time_start);
   cout << endl;
   cout << "time: " << (duration).count() << endl;
 
