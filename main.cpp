@@ -1,203 +1,206 @@
 #include <fstream>
 #include <map>
-#include <string>
+#include <chrono>
 #include <vector>
+#include <immintrin.h>
 #include <iostream>
 #include <list>
 #include <thread>
 #include <pthread.h>
-#include <bits/stdc++.h>
 
 using namespace std;
 
-//Querey
-/*
- *  type => Decides if this is a prefix scan or a single item scan. Can assume value of 1 or 0
- * 
-/*/
-void Querey(int type, string prefix,map<string, int>& mapping, vector<int> &Vals, map<int,vector<int>> &OrderData){
-  map<string, int>::iterator itr_mapping;
-  vector<int> lookupVals;
-  Vals.clear();
-
-//Process data if valid request
-  if(type == 1 || type == 0){
-    if(type == 1){
-      //get the value associated with the input word
-      itr_mapping = mapping.find(prefix);
-      if(itr_mapping != mapping.end()){
-        lookupVals.push_back(mapping[prefix]);
-      }
-
-    }else if (type == 0){
-      //based on given prefix find indexes of entries that have that prefix
-      for(itr_mapping = mapping.begin(); itr_mapping != mapping.end(); itr_mapping++){
-        if((*itr_mapping).first.find(prefix) == 0){
-          lookupVals.push_back((*itr_mapping).second);
-        }
-      }
-    }
-
-    // Find the indicies for all of the requests that were made
-    for(int i = 0; i < int(lookupVals.size()); i++){
-      for(int j = 0; j < int(OrderData[lookupVals[i]].size()); j++){
-        Vals.push_back(OrderData[lookupVals[i]][j]);
-      }
-    }
-
-
-  }else{
-    cerr << "ERR 401: Bad Data passed to Querey function \"type\" argument"<<endl;
+// print vectors
+void print(vector<int> &vec){
+  for(uint i = 0; i < vec.size(); i++){
+    cout << vec[i] << " ";
   }
+  cout << endl;
 }
 
-
-//
-void encode(map<string, int>& mapping, int en, int end){
+// Regular encoding without integer compression
+void encode(map<string, int>& mapping, int en, int end, vector<int> &encoded_data){
   // Get the mapping and store it in the library
   int count = 0;
-  for(auto i = mapping.begin(); count < int(mapping.size()); i++, count++){ // i is a pointer to the beginning of the mapped structure
-    if(count < end and count >= en){                                        // For each thread, only operate on the section of data dedicated for you
+  for(auto i = mapping.begin(); count < int(mapping.size()); i++, count++){
+    if(count < end and count >= en){         // For each thread, only operate on the section of data dedicated for you
+      for(int j = 0; j < int(encoded_data.size()); j++){              // Update the codes
+        if(encoded_data[j] == i->second) encoded_data[j] = en+1;
+      }
       i->second += ++en;
-      // cout << i->first << " " << i->second << endl;
     }
   }
 
   return;
 }
 
+// Baseline
+void vanilla(fstream &file, list<string> &data){
+  string value, read;
+
+  while(file >> read) data.push_back(read);             // Store column data
+
+  while(true){
+    cout << "Enter column data to search: ";
+    cin >> value;
+
+    list<string>::iterator itr = data.begin();
+    auto time_start = std::chrono::high_resolution_clock::now();
+    for(int i = 0; i < int(data.size()); i++, itr++){
+      if(*itr == value) cout << i << ", ";
+    }
+    auto time_end = std::chrono::high_resolution_clock::now();
+    auto duration = chrono::duration_cast<chrono::seconds>(time_start - time_end);
+    cout << endl;
+
+    cout << "time: " << (duration).count() << endl;
+  }
+}
+
+// Encode using the delta algorithm
+void delta_encode(vector<int>& data, int start, int end) {
+  if(start == 0) start = 1;
+    for(; start < end; start++) {
+        data[start] = data[start] - data[start - 1];
+    }
+}
+
+// Decode using the delta algorithm
+vector<int> delta_decode(const vector<int>& compressed) {
+    vector<int> data;
+    if(compressed.empty()) return data;
+
+    data.push_back(compressed[0]); // First value remains the same
+    for(int i = 1; i < int(compressed.size()); i++) {
+        int original_value = data[i - 1] + compressed[i];
+        data.push_back(original_value);
+    }
+    return data;
+}
+
+// Compress using the variable byte algorithm
+vector<uint8_t> variable_byte_encode(int value) {
+    std::vector<uint8_t> bytes;
+    while (value >= 128) {
+        bytes.push_back(static_cast<uint8_t>(value & 0x7F) | 0x80);
+        value >>= 7;
+    }
+    bytes.push_back(static_cast<uint8_t>(value));
+    return bytes;
+}
+
+// Uncompress using the variable_byte algorithm
+inline int variable_byte_decode_simd(const std::vector<uint8_t>& bytes){
+  __m128i result = _mm_setzero_si128();
+  __m128i mask = _mm_set1_epi8(0x7F);
+
+  int shift = 0;
+  size_t i = 0;
+
+  while(i < bytes.size()){
+    __m128i byte_data = _mm_set1_epi8(bytes[i]);
+    __m128i shift_data = _mm_slli_si128(byte_data, shift);
+    result = _mm_or_si128(result, _mm_and_si128(shift_data, mask));
+    shift += 7;
+    i++;
+
+    if((bytes[i - 1] & 0x80) == 0){
+      break;
+    }
+  }
+
+  int decoded_value;
+  _mm_storeu_si128(reinterpret_cast<__m128i*>(&decoded_value), result);
+  return decoded_value;
+}
+
 // Creates the encoded and mapping structures
-void setup(fstream &file, map<string, int>& mapping, list<string> &data, list<int> &encoded_data){
+void setup(fstream &file, map<string, int>& mapping, vector<int> &encoded_data){
   string read;
-  vector<thread> threads;
-  map<int,list<int>>::iterator itr_map;
-  int en = 0;
+  list<thread> threads;
+  vector<int> compressed, uncompressed;
+  int numThreads = 2; int count = 0;
+  char technique;
+
+  cout << "Enter the number of threads to use for encoding, between 1 and " <<
+  std::thread::hardware_concurrency() << ": ";
+  cin >> numThreads;
+  cout << "Enter the letter 'd' to use delta encoding, or the letter 'v' to use " <<
+  "variable byte encoding: ";
+  cin >> technique;
 
   while(file >> read){
-    if(mapping.find(read) == mapping.end()){    // Check to see if we have already read this word
-      mapping[read] = 0;
+    // Add the data without duplicates
+    auto i = mapping.find(read);              // Check to see if we've already added this value
+    if(i == mapping.end()) {                  // If we haven't, asign a temporary value as the codec
+      mapping[read] = count;
+      encoded_data.push_back(count++);
+    }else{                                    // Otherwise, find the codec that was set for it when it was first found
+      encoded_data.push_back(i->second);
     }
-
-    data.push_back(read);
   }
-
   file.close();
 
-  threads.push_back(thread(encode, ref(mapping), en, int(mapping.size()/2)));                       // First thread goes from beginning to middle
-  threads.push_back(thread(encode, ref(mapping), mapping.size()/2, int(mapping.size())));          // Second thread goes from middle to end
-  threads[0].join(); threads[1].join()  ;
+  cout << "Starting threads" << endl;
+  int chunkSize = int(encoded_data.size()) / numThreads;
+  auto time_start = std::chrono::high_resolution_clock::now();
+  for(int i = 0; i < numThreads; i++) {
+    int start = i * chunkSize;
+    int end = (i == numThreads - 1) ? int(mapping.size()) : (i + 1) * chunkSize;
 
-  threads.push_back(thread());
-
-
-
-  // Set the encoded_data properly
-  for(auto i = data.begin(); i != data.end(); i++){
-    encoded_data.push_back(mapping[*i]);
+    threads.push_back(thread(delta_encode, ref(encoded_data), start, end));
+    // else threads.push_back(thread(variable_byte_encode, ref(encoded_data), start, end));
   }
-}
 
+  for(auto i = threads.begin(); i != threads.end(); i++){
+    i->join();
+  }
+  auto time_end = std::chrono::high_resolution_clock::now();
+  auto duration = chrono::duration_cast<chrono::seconds>(time_start - time_end);
+  cout << endl;
+  cout << "time: " << (duration).count() << endl;
 
-void setOrder(map<int,vector<int>> &OrderData, list<int> &encoded_data){
-  map<int,vector<int>>::iterator itr_map;
-  list<int>::iterator itr;
-  vector<int> temp;
-  temp.push_back(0);
-  int idx = 0;
+  /*cout << "Threads done" << endl;
 
-  for(itr = encoded_data.begin(); itr != encoded_data.end(); itr++){
-    itr_map = OrderData.find(*itr); //check if number in Ordered map
+  // Further reduce
+  cout << "starting encoding" << endl;
+  auto time_start = std::chrono::high_resolution_clock::now();
 
-    if(itr_map != OrderData.end()){          // same occurance of number
-      (itr_map -> second).push_back(idx);
-
-    }else{
-      
-      temp[0] = idx;
-      pair<int,vector<int>> temp2 = make_pair(*itr, temp);
-      OrderData.insert(temp2);      // new ocurance of number
+  if(technique == 'd'){
+    compressed = delta_encode(encoded_data);
+    // uncompressed = delta_decode(compressed);
+  }else if(technique == 'v'){
+    vector<vector<uint8_t> >variable_encode;
+    for(int i = 0; i < int(encoded_data.size()); i++){             // Encode the data
+      variable_byte_encode(encoded_data[i]);
     }
-    idx++;
   }
 
-}
 
+    // print(encoded_data); cout << endl;
+    // print(compressed); cout << endl;
+    // print(uncompressed);*/
+}
 
 
 int main(){
-    string quit_CMD = "";
-    string option1 = "";
     string file_name, read;
     map<string, int> mapping;
-    map<int,vector<int>> OrderData;
-    vector<int> Values;
-    list<string> data;                       
-    list<int> encoded_data;
+    list<string> data;    vector<int> encoded_data;
 
     cout << "file name: ";
     cin >> file_name;
 
     fstream file(file_name);
-    if(file.good()){
+    if(file.good()) {
+      cout << "Enter y for dictionary encoding and n for regular: ";
+      cin >> file_name;
 
-      setup(file, mapping, data, encoded_data);
-      setOrder(OrderData,encoded_data);
-
+      if(file_name == "y") setup(file, mapping, encoded_data);
+      else vanilla(file, data);
     }
-    
-    else 
-      cout << "Unable to open file. Exiting program." << endl;
+    else cout << "Unable to open file. Exiting program." << endl;
 
-    // list<int>::iterator itr;
-    // for(itr = encoded_data.begin(); itr != encoded_data.end(); itr++){
-    //   cout << *itr << endl;
-    // }
-    
 
-    while(quit_CMD != "quit"){
-      cout << "Would you like to quit? If so type \"quit\" below type \"no\" otherwise" << endl;
-      cin >> quit_CMD;
-
-      transform(quit_CMD.begin(),quit_CMD.end(),quit_CMD.begin(), ::tolower);
-
-      if(quit_CMD != "quit"){
-        cout << "What type of search would you like to do? 1 = single 0 = prefix" << endl;
-        cin >> option1;
-
-        if(option1.length() != 1){
-          cerr << "A digit was not input to the program pls try again" << endl;
-
-        }else{
-          if( isdigit(option1[0]) && stoi(option1) == 1 ){
-          // Do single search
-          string word = "";
-          cout << "Please enter a Word to search for" << endl;
-          cin >> word;
-
-          Querey(stoi(option1),word ,mapping,Values,OrderData);
-
-          }else if (isdigit(option1[0])){
-            // Hand to query to do search specified or send ERR messsage
-
-            string prefix1 = "";
-            cout << "Please enter a prefix" << endl;
-            cin >> prefix1;
-
-            Querey(stoi(option1), prefix1,mapping,Values,OrderData);
-          }else{
-            break;
-          }
-
-          for(int i = 0; i < int(Values.size()); i ++){
-            cout << Values[i] ;
-            if(i+ 1 < int(Values.size())){
-              cout << ", ";
-            }
-          }
-          cout<<endl;
-        }
-      }
-    }
-
-  return 0;
+    return 0;
 }
