@@ -16,7 +16,7 @@ For the encoding section, we had a choice between two integer compression techni
 
 ### Thread
 The obvious way of using `multi-threading` in this experiment was in conjunction with the integer compressions. The user specifies how many threads they want to use, and the program runs a separate instance of the `delta` compression algorithm for each thread. The `delta` encoding algorithm was tested on threads `2, 4, 6, 8, 10, 12`. The expectation were the same as the one that was seen in Project 2, where having lots of threads were good, leading to shorter overally computational time. On the other hand, having too many threads can hurt performance. As can be seen from the graph below, the time it took for the encoding to be done started off high. With the increase of the number of threads however, the overall time decreased. 
-![](https://github.com/danielle-den/Project_4/blob/main/Figures/Encoding%20Time(micro)%20vs.%20Thread%20%23.png_
+                            ![stuff](https://github.com/danielle-den/Project_4/blob/main/Figures/Encoding%20Time(micro)%20vs.%20Thread%20%23.png)
 
 ### SIMD
 The way we used the SIMD functions for our implementation was to use it to decode the encode table. Since only the encode column goes through the second round of integer compression, that means that the values inside that table have to be reverted back. 
