@@ -25,7 +25,7 @@ For the encoding section, we had a choice between two integer compression techni
 As can be seen, the difference in performance was immense. Although the performance of the algorithms depend on the programmer, we saw that with our implementation there was a huge difference in performance. As the number of threads increased, the time it took for the encoding to finish running also decreased. Unlike the experiment done on the thread along, the duration of this experiment kept decreasing and never went up.
 
 
-# Query
-Performing the query was a bit difficult given the constraints. 
+## Query
+The query function was a bit more difficult. Since the mapping was storing the original encoded value while the codec itself was storing the integer compressed version, it meant that when you find the column data you were looking for, we had to take the number and convert it to it's delta coded version. Our implementation did not use hashing, so trying to convert the original value to the integer version required trivial methods. The way we implemented it was to take the original code, 
 
 
