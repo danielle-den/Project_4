@@ -39,9 +39,8 @@ void Querey(int type, string prefix,map<string, int>& mapping, vector<int> &Vals
     }
 
     // Find the indicies for all of the requests that were made
-    for(int i = 0; i < lookupVals.size(); i++){
-      for(int j = 0; j < OrderData[lookupVals[i]].size(); j++){
-
+    for(int i = 0; i < int(lookupVals.size()); i++){
+      for(int j = 0; j < int(OrderData[lookupVals[i]].size()); j++){
         Vals.push_back(OrderData[lookupVals[i]][j]);
       }
     }
@@ -53,13 +52,6 @@ void Querey(int type, string prefix,map<string, int>& mapping, vector<int> &Vals
 }
 
 
-//check if 1 item exists in column
-  // if so return all inidcies of all matching entries in the column
-
-//Given a prefix  find 7 return all unique matching data and their indicies
-  // must supposrt use of SIMD instructionsto speed up seach/ scan
-
-
 //
 void encode(map<string, int>& mapping, int en, int end){
   // Get the mapping and store it in the library
@@ -67,7 +59,7 @@ void encode(map<string, int>& mapping, int en, int end){
   for(auto i = mapping.begin(); count < int(mapping.size()); i++, count++){ // i is a pointer to the beginning of the mapped structure
     if(count < end and count >= en){                                        // For each thread, only operate on the section of data dedicated for you
       i->second += ++en;
-      cout << i->first << " " << i->second << endl;
+      // cout << i->first << " " << i->second << endl;
     }
   }
 
@@ -102,14 +94,15 @@ void setup(fstream &file, map<string, int>& mapping, list<string> &data, list<in
   // Set the encoded_data properly
   for(auto i = data.begin(); i != data.end(); i++){
     encoded_data.push_back(mapping[*i]);
-    // OrderData.insert();
   }
 }
 
 
-void setOrder(map<int,vector<int>> &OrderData, list<int> &encoded_data,map<string, int>& mapping){
+void setOrder(map<int,vector<int>> &OrderData, list<int> &encoded_data){
   map<int,vector<int>>::iterator itr_map;
   list<int>::iterator itr;
+  vector<int> temp;
+  temp.push_back(0);
   int idx = 0;
 
   for(itr = encoded_data.begin(); itr != encoded_data.end(); itr++){
@@ -117,8 +110,12 @@ void setOrder(map<int,vector<int>> &OrderData, list<int> &encoded_data,map<strin
 
     if(itr_map != OrderData.end()){          // same occurance of number
       (itr_map -> second).push_back(idx);
+
     }else{
-      OrderData.insert(make_pair(*itr, idx));      // new ocurance of number
+      
+      temp[0] = idx;
+      pair<int,vector<int>> temp2 = make_pair(*itr, temp);
+      OrderData.insert(temp2);      // new ocurance of number
     }
     idx++;
   }
@@ -144,7 +141,7 @@ int main(){
     if(file.good()){
 
       setup(file, mapping, data, encoded_data);
-      setOrder(OrderData,encoded_data,mapping);
+      setOrder(OrderData,encoded_data);
 
     }
     
@@ -191,8 +188,11 @@ int main(){
             break;
           }
 
-          for(int i = 0; i < Values.size(); i ++){
-            cout << Values[i] << ", ";
+          for(int i = 0; i < int(Values.size()); i ++){
+            cout << Values[i] ;
+            if(i+ 1 < int(Values.size())){
+              cout << ", ";
+            }
           }
           cout<<endl;
         }
