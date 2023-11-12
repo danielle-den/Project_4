@@ -20,7 +20,7 @@ For the encoding section, we had a choice between two integer compression techni
 
 |   SIMD   | SIMD vs Normal |
 |------|------|
-| ![](/images/)| ![]()|
+| ![](/images/SIMD.png)| ![]()|
 
 As can be seen, the difference in performance was immense. Although the performance of the algorithms depend on the programmer, we saw that with our implementation there was a huge difference in performance. As the number of threads increased, the time it took for the encoding to finish running also decreased. Unlike the experiment done on the thread along, the duration of this experiment kept decreasing and never went up.
 
