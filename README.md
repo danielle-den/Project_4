@@ -10,3 +10,9 @@ To be able to compare the encoding techniques, we first begin with the normal im
 ![https://github.com/danielle-den/Project_4/blob/main/Figures/Time(s)%20vs.%20Trial.png](https://github.com/danielle-den/Project_4/blob/main/Figures/Time(s)%20vs.%20Trial.png)
 
 We notice an interesting trend on the graph for the first 3 points. As the number of occurences were increasing, the time it took to find them were also increasing. For the last data point however, the duration is lower than the previous values. To see what could have caused this, we looked at the length of the 4 values and we realized that for the first three, the length of the string increased up to the 3rd point. At the 4th point however, it was made up of only 4 letters. This seems to conclude that the size of the data being queried, as well as the number of occurences it has, influences the time it takes to find it. The values that were used for this experiment were, `bojt`, `oedtz`, `byasa`, and `ffrn`. 
+
+### Encoding
+For the encoding section, we had a choice between two integer compression techniques: `delta compression`, and `variable-byte compression`. While the `variable-byte` algorithm is much faster, it can be a bit more difficult to implement. The `delta` one though works more for sorted data. Our encoded is luckily sorted, since we assign initial values based on the data that is read first. When we tested the en.
+
+### Thread
+The obvious way of using `multi-threading` in this experiment was in conjunction with the integer compressions. The user specifies how many threads they want to use, and the program runs a separate instance of the `delta` compression algorithm for each thread. 
