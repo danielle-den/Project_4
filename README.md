@@ -18,7 +18,7 @@ The obvious way of using `multi-threading` in this experiment was in conjunction
 ### Integer Compression - Delta Encoding
 For the encoding section, we had a choice between two integer compression techniques: `delta compression`, and `variable-byte compression`. While the `variable-byte` algorithm is much faster, it can be a bit more difficult to implement. The `delta` one though works more for sorted data. Our encoded is luckily sorted, since we assign initial values based on the data that is read first. When testing out the delta encoding, we had the option between using it with SIMD and using it without SIMD. For this part of the test, we redid the test performed for the thread but only for the SIMD encode. We expected to get even better values than when we did the thread experiment without the SIMD. The first graph below is the SIMD experiment by itself while the second is in comparison. 
 
-|   SIMD   | SIMD vs Normal |
+|   SIMD   | No SIMD vs SIMD |
 |------|------|
 | ![](https://github.com/danielle-den/Project_4/blob/main/Figures/SIMD.png)| ![](https://github.com/danielle-den/Project_4/blob/main/Figures/No_SIMD.png)|
 
