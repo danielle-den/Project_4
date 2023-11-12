@@ -26,6 +26,6 @@ As can be seen, the difference in performance was immense. Although the performa
 
 
 # Query
-
+Performing the query was a bit difficult given the constraints. 
 
 
