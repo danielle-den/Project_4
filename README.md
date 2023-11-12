@@ -26,6 +26,19 @@ As can be seen, the difference in performance was immense. Although the performa
 
 
 ## Query
-The query function was a bit more difficult. Since the mapping was storing the original encoded value while the codec itself was storing the integer compressed version, it meant that when you find the column data you were looking for, we had to take the number and convert it to it's delta coded version. Our implementation did not use hashing, so trying to convert the original value to the integer version required trivial methods. The way we implemented it was to take the original code, 
+Quering the data was a bit inefficient. The reason for this is because the encoded table and the mapping table are not storing the same values. The encoded table stores the integer compressed version, while the mapping table stores the original. Therefore in order to look for any values, the program must first decode the encoded table first. The good thing is that we only need to encode and decode once. When the program starts for the first time, it uses the integer compression algorithm (`delta encoding`) in an attempt to reduce the footprint. When we need to find a value, it decodes the entire table in order to use it. For this experiment, we will only test the query function, including the decode function. 
+
+|Word  | Encoding Time (s)| Count|
+|------|------------------|------|
+|ajzt  |2|473|
+|jahkb |2|165|
+|prwjiy|2|71|
+|synkfiaoyj|2|113|
+|mikvozuhba|2|110|
+
+Looking at the data above, the interesting phenomenom that we saw was that the search time was 2 seconds when looking for the data. 2 threads were used for this one. When we compare this with the baseline implementation, we can see that this algorithm does not seem to depend on the size of the letter, nor does it depend on the number of times the word appears in the file. To be certain, we reran the test and measured the time in milliseconds to see how different the results were between the words.
+
+We also decided to increase the number of threads to see the effects. Before starting it, our hypothesis was that there would be a certain number of threads that would improve the performance. After that number though, either the performance would remain constant or possibly even degrade.
+
 
 
