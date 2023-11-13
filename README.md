@@ -36,9 +36,17 @@ Quering the data was a bit inefficient. The reason for this is because the encod
 |synkfiaoyj|2|113|
 |mikvozuhba|2|110|
 
-Looking at the data above, the interesting phenomenom that we saw was that the search time was 2 seconds when looking for the data. 2 threads were used for this one. When we compare this with the baseline implementation, we can see that this algorithm does not seem to depend on the size of the letter, nor does it depend on the number of times the word appears in the file. To be certain, we reran the test and measured the time in milliseconds to see how different the results were between the words.
+Looking at the data above, the interesting phenomenom that we saw was that the search time was 2 seconds when looking for the data. 2 threads were used for this one. When we compare this with the baseline implementation, we can see that this algorithm does not seem to depend on the size of the letter, nor does it depend on the number of times the word appears in the file. To be certain, we reran the test and measured the time in milliseconds to see how different the results were between the words. As can be seen below, the duration in milliseconds may be different, but to the average user there is no difference.
 
-We also decided to increase the number of threads to see the effects. Before starting it, our hypothesis was that there would be a certain number of threads that would improve the performance. After that number though, either the performance would remain constant or possibly even degrade.
+|Word  | Encoding Time (ms)| Count|
+|------|------------------|------|
+|ajzt  |2282|473|
+|jahkb |2248|165|
+|prwjiy|2429|71|
+|synkfiaoyj|2263|113|
+|mikvozuhba|2256|110|
+
+The current implementation of Query only uses SIMD and does not depend on thread. If we were to modify it to depend on threads however, there are 2 behaviors that we would expect. The first behavior is that the performance would increase just like what we saw from the previous experiment as well as from Project 2. The other behavior might actually be no noticeable difference. The functions used in our program uses pointers to the encoded data vector and other data structures. When threads are used, it's possible that the operating system might need to lock the data to one thread at a time, thereby reducing the potential performance advantage. On the other hand, what we can see is that the encode and decode functions work well when using threads. This seems to point to the conclusion that the a Query using threads would also increase performance.
 
 
 
