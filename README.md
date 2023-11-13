@@ -26,6 +26,7 @@ As can be seen, the difference in performance was immense. Although the performa
 
 
 ## Query
+#### Single Data Query with SIMD
 Quering the data was a bit inefficient. The reason for this is because the encoded table and the mapping table are not storing the same values. The encoded table stores the integer compressed version, while the mapping table stores the original. Therefore in order to look for any values, the program must first decode the encoded table first. The good thing is that we only need to encode and decode once. When the program starts for the first time, it uses the integer compression algorithm (`delta encoding`) in an attempt to reduce the footprint. When we need to find a value, it decodes the entire table in order to use it. For this experiment, we will only test the query function, including the decode function. 
 
 |Word  | Encoding Time (s)| Count|
@@ -48,6 +49,16 @@ Looking at the data above, the interesting phenomenom that we saw was that the s
 
 The current implementation of Query only uses SIMD and does not depend on thread. If we were to modify it to depend on threads however, there are 2 behaviors that we would expect. The first behavior is that the performance would increase just like what we saw from the previous experiment as well as from Project 2. The other behavior might actually be no noticeable difference. The functions used in our program uses pointers to the encoded data vector and other data structures. When threads are used, it's possible that the operating system might need to lock the data to one thread at a time, thereby reducing the potential performance advantage. On the other hand, what we can see is that the encode and decode functions work well when using threads. This seems to point to the conclusion that the a Query using threads would also increase performance.
 
+#### Single Data without SIMD
+
 ### Prefix Query
+#### Benchmarking Query
+
+#### Benchmarking Prefix Query
+
+#### Prefix Query with SIMD
 In order to perform a prefix query using only an `encoded` table implemented with a `vector`, and a `mapping` table implemented with a `map`, the method used in our program was to take the prefix specified by the user, go through the entire map and compare the key with the prefix value. For each match that is found, we will use the original `query` function to return the information on it. This implementation 
+
+#### Prefix Query without SIMD
+
 
