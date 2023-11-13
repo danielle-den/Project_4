@@ -67,7 +67,7 @@ Due to the fact that this dataset has hundreds of thousands of values and theref
 
 |Benchmarking Prefix Query|Prefix Query with SIMD|Prefix Query without SIMD|
 |-------------------------|----------------------|-------------------------|
-| ![]()                   | ![]()                |  ![]()                  |
+| ![]()                   | |  ![]()                  |
 
 
 
