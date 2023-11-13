@@ -80,3 +80,6 @@ The trivial part of the experiment was the `prefix` query. C++ maps do not have 
 Additionally, our initial implementation had an additional vector that stored the entire file. We used it later on to be able to have a `mapping` map that mirrored the one from lecture (Part 5 Sotware Data Storage). Unfortunately our computer would crash seeing as there was too much data being used by our program, for which reason we resorted to this approach. The overral data usage, while better, was not what we expected. The original file is 1.04 GB in size, while our `encoded_data` file is 939MB and the `mapping` file is 14KB. Regardless of the low turnout, the reduction in size is still much better. At least for our program the prefix implementation was not the best, there were certainly much better ways it could have been implemented. We can see if being used in the device we're using right now. When you look for a file, you only have to type the first couple of letters and it can find it for you as well as similar files. Had we implemeneted it better, we would have realized a very good use of the dictionary encoding.
 
 
+| | | |
+|-|-|-|
+| | | |
