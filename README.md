@@ -67,10 +67,16 @@ Due to the fact that this dataset has hundreds of thousands of values and theref
 
 |Benchmarking Prefix Query|Prefix Query with SIMD|Prefix Query without SIMD|
 |-------------------------|----------------------|-------------------------|
-|          10 mins          |                20 mins  |           20 mins         |
+|          10 mins          |                >20 mins  |           >20 mins         |
 
 
 ## Conclusion
-The 
+This project explores the results of compression on RAM and SSD usage. In this experiment, we use `multithreading` and `SIMD` to implement dictionary encoding to reduce the size of a file. For our implementation, we were unable to use any prebuilt library to help us with using the `delta` encoding technique, so we had to do the heavy lifiting from scratch. The way we utilized multithreading was that when the input file had already been read into the `mapping` map and the `encoded_data` vector, we used the `delta` encoding technique in an effort to further reduce the amount of space being used.
+
+Our program asks the user for the number of threads they want to use, and we would perform the `delta` encoding on the `encoded_data` vector by spliting it up between the different threads specified by the user. We saw that by increasing the number of threads, the performance of the encoding increased. Moreover, when we utilized SIMD in conjunction with multithreading, we saw that the basic queries were insanely fast, with the program able to find queried data within 2 seconds. 
+
+The trivial part of the experiment was the `prefix` query. C++ maps do not have a function where you are able to look for values using prefixes, so we had to step through the entire map. After finding a match, we then input the value into the original `query` function, thereby restarting the query function all over again. Unfortunately, it has to redo the `query` for every match that it finds which is pretty slow. Moreover, our current implementation does not actually benefit from using the SIMD operations since we only use it for encoding. In our `main.cpp`, we have 2 query functions. The very first one is much better, but it requires additional arrays to be made, which takes up more space. 
+
+Additionally, our initial implementation had an additional vector that stored the entire file. We used it later on to be able to have a `mapping` map that mirrored the one from lecture (Part 5 Sotware Data Storage). Unfortunately our computer would crash seeing as there was too much data being used by our program, for which reason we resorted to this approach. The overral data usage, while better, was not what we expected. The original file is 1.04 GB in size, while our `encoded_data` file is 939MB and the `mapping` file is 14KB. Regardless of the low turnout, the reduction in size is still much better. At least for our program the prefix implementation was not the best, there were certainly much better ways it could have been implemented. We can see if being used in the device we're using right now. When you look for a file, you only have to type the first couple of letters and it can find it for you as well as similar files. Had we implemeneted it better, we would have realized a very good use of the dictionary encoding.
 
 
