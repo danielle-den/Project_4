@@ -48,5 +48,6 @@ Looking at the data above, the interesting phenomenom that we saw was that the s
 
 The current implementation of Query only uses SIMD and does not depend on thread. If we were to modify it to depend on threads however, there are 2 behaviors that we would expect. The first behavior is that the performance would increase just like what we saw from the previous experiment as well as from Project 2. The other behavior might actually be no noticeable difference. The functions used in our program uses pointers to the encoded data vector and other data structures. When threads are used, it's possible that the operating system might need to lock the data to one thread at a time, thereby reducing the potential performance advantage. On the other hand, what we can see is that the encode and decode functions work well when using threads. This seems to point to the conclusion that the a Query using threads would also increase performance.
 
-
+### Prefix Query
+In order to perform a prefix query using only an `encoded` table implemented with a `vector`, and a `mapping` table implemented with a `map`, the method used in our program was to take the prefix specified by the user, go through the entire map and compare the key with the prefix value. For each match that is found, we will use the original `query` function to return the information on it. This implementation 
 
