@@ -51,14 +51,23 @@ The current implementation of Query only uses SIMD and does not depend on thread
 
 #### Single Data without SIMD
 
+
+|Word  | Encoding Time (ms)| Count|
+|------|------------------|------|
+|aj  |2282|473|
+|jah |2248|165|
+|prwj|2429|71|
+|s|2263|113|
+|mikvoz|2256|110|
+
+|Benchmarking Query
+
 ### Prefix Query
-#### Benchmarking Query
+Due to the fact that this dataset has hundreds of thousands of values and therefore performing a query search on all of them as well as finding their indices will not only take a long time but will also be taxing on our device, we decided to limit our test to simply looking for the matching words using each of the words and printing out the word itself. The program however, does work when it is queried for this function. Moreover, it truly prints out the matched words as well as the indices in the original file. The pictures below are example outputs showing the time it took for the program to run when we limit the output to time only. We took the value `pikgyaqet` and took the substring, `pikgyaqe` and put it through the algorithm.
 
-#### Benchmarking Prefix Query
+|Benchmarking Prefix Query|Prefix Query with SIMD|Prefix Query without SIMD|
+|-------------------------|----------------------|-------------------------|
+| ![]()                   | ![]()                |  ![]()                  |
 
-#### Prefix Query with SIMD
-In order to perform a prefix query using only an `encoded` table implemented with a `vector`, and a `mapping` table implemented with a `map`, the method used in our program was to take the prefix specified by the user, go through the entire map and compare the key with the prefix value. For each match that is found, we will use the original `query` function to return the information on it. This implementation 
-
-#### Prefix Query without SIMD
 
 
